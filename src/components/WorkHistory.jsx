@@ -1,23 +1,5 @@
-import React from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber'
-import { Stars, useTexture, Sphere, Float } from '@react-three/drei'
-import { Suspense, useRef, useState, useEffect, useMemo } from 'react'
-import { 
-  MeshStandardMaterial, 
-  SphereGeometry, 
-  DoubleSide, 
-  ConeGeometry,
-  CylinderGeometry,
-  PlaneGeometry,
-  TextureLoader,
-  RepeatWrapping,
-  BufferGeometry,
-  BufferAttribute,
-  Points,
-  PointsMaterial,
-  AdditiveBlending
-} from 'three'
 
 // WORK EXPERIENCE DATA
 const workExperience = [
@@ -35,7 +17,8 @@ const workExperience = [
       'Developed backend services using Java and Spring Boot',
       'Applied Java multi-threading to optimize backend performance, reducing response time by 20%'
     ],
-    color: '#ff6b35'
+    color: '#ff6b35',
+    icon: '/assets/images/control-panel.jpg'
   },
   {
     id: 2,
@@ -51,7 +34,8 @@ const workExperience = [
       'Reduced processing time by 30% using emerging technologies',
       'Enhanced model robustness by 40% through rigorous validation procedures'
     ],
-    color: '#d2691e'
+    color: '#d2691e',
+    icon: '/assets/images/satellite.jpg'
   },
   {
     id: 3,
@@ -67,7 +51,8 @@ const workExperience = [
       'Conducted code reviews, reducing code errors by 40%',
       'Consistently delivered projects on schedule, surpassing client expectations by 15%'
     ],
-    color: '#cd853f'
+    color: '#cd853f',
+    icon: '/assets/images/spaceship.jpg'
   },
   {
     id: 4,
@@ -83,482 +68,475 @@ const workExperience = [
       'Cut project delays by 20% through effective collaboration',
       'Mentored junior developers, enhancing their technical skills by 35%'
     ],
-    color: '#a0522d'
+    color: '#a0522d',
+    icon: '/assets/images/space-station.jpg'
   }
 ]
 
-// MARS BACKGROUND SURFACE WITH REAL IMAGE
-function MarsBackgroundSurface() {
-  const surfaceRef = useRef()
-  const marsTexture = useTexture('/assets/images/mars-background.jpg')
-  
-  useEffect(() => {
-    if (marsTexture) {
-      marsTexture.wrapS = RepeatWrapping
-      marsTexture.wrapT = RepeatWrapping
-      marsTexture.repeat.set(3, 3)
-    }
-  }, [marsTexture])
-  
-  useFrame(() => {
-    if (surfaceRef.current) {
-      surfaceRef.current.rotation.y += 0.0003
-    }
-  })
-  
-  return (
-    <mesh ref={surfaceRef} position={[0, -30, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <planeGeometry args={[600, 600, 100, 100]} />
-      <meshStandardMaterial
-        map={marsTexture}
-        color="#a0522d"
-        roughness={0.9}
-        metalness={0.1}
-      />
-    </mesh>
-  )
-}
+// OPTIMIZED MARS BACKGROUND WITH VISIBLE EFFECTS AND SMALLER PARTICLES
+const OptimizedMarsBackground = () => {
+  const canvasRef = useRef(null)
+  const animationRef = useRef(null)
+  const particlesRef = useRef([])
+  const dustParticlesRef = useRef([])
+  const emberParticlesRef = useRef([])
+  const meteorParticlesRef = useRef([])
+  const starParticlesRef = useRef([])
+  const volcanoRef = useRef({ erupting: false, intensity: 0 })
+  const lightningRef = useRef({ active: false, strikes: [] })
 
-// LEFT BOTTOM VOLCANO WITH REAL TEXTURES
-function LeftBottomVolcano({ onEruption, onShake }) {
-  const volcanoRef = useRef()
-  const lavaPoolRef = useRef()
-  const explosionRef = useRef()
-  const smokeRef = useRef()
-  const [isErupting, setIsErupting] = useState(false)
-  
-  const lavaTexture = useTexture('/assets/images/lava-texture.jpg')
-  
   useEffect(() => {
-    if (lavaTexture) {
-      lavaTexture.wrapS = RepeatWrapping
-      lavaTexture.wrapT = RepeatWrapping
-      lavaTexture.repeat.set(2, 2)
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    let animationId = null
+
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
     }
-  }, [lavaTexture])
-  
-  useFrame((state) => {
-    const time = state.clock.elapsedTime
-    
-    if (volcanoRef.current) {
-      volcanoRef.current.rotation.y += 0.002
-    }
-    
-    if (lavaPoolRef.current) {
-      lavaPoolRef.current.material.emissiveIntensity = 2.0 + Math.sin(time * 6) * 0.5
-      lavaPoolRef.current.position.y = 8 + Math.sin(time * 4) * 0.3
-    }
-    
-    // Eruption cycle every 10 seconds
-    const eruptionCycle = (time % 10) / 10
-    const shouldErupt = eruptionCycle > 0.6 && eruptionCycle < 0.8
-    
-    if (shouldErupt && !isErupting) {
-      setIsErupting(true)
-      onEruption(true)
-      onShake(true)
-    } else if (!shouldErupt && isErupting) {
-      setIsErupting(false)
-      onEruption(false)
-      onShake(false)
-    }
-    
-    if (explosionRef.current) {
-      if (isErupting) {
-        explosionRef.current.scale.setScalar(6 + Math.sin(time * 20) * 2)
-        explosionRef.current.material.opacity = 0.9 + Math.sin(time * 30) * 0.1
-        explosionRef.current.position.y = 15 + Math.sin(time * 25) * 4
-      } else {
-        explosionRef.current.scale.setScalar(0.1)
-        explosionRef.current.material.opacity = 0
+
+    resizeCanvas()
+    window.addEventListener('resize', resizeCanvas)
+
+    // OPTIMIZED PARTICLE SYSTEMS WITH SMALLER SIZES
+    const initParticles = () => {
+      particlesRef.current = []
+      for (let i = 0; i < 150; i++) { // Reduced count for performance
+        particlesRef.current.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 2 + 1, // SMALLER: 1-3px instead of 2-8px
+          speedX: (Math.random() - 0.5) * 0.8,
+          speedY: (Math.random() - 0.5) * 0.8,
+          opacity: Math.random() * 0.6 + 0.4, // Visible but not overwhelming
+          color: `hsl(${Math.random() * 60 + 10}, 90%, 70%)`,
+          pulse: Math.random() * Math.PI * 2,
+          trail: []
+        })
       }
     }
-    
-    if (smokeRef.current) {
-      smokeRef.current.rotation.y += 0.03
-      smokeRef.current.position.y = 12 + Math.sin(time * 1.2) * 2
-      smokeRef.current.material.opacity = 0.4 + Math.sin(time * 2) * 0.2
-      smokeRef.current.scale.setScalar(1.5 + Math.sin(time * 1.8) * 0.4)
-    }
-  })
-  
-  return (
-    <group position={[-50, -25, -20]}>
-      {/* Volcano Base */}
-      <mesh ref={volcanoRef}>
-        <coneGeometry args={[18, 30, 32]} />
-        <meshStandardMaterial
-          color="#2f1b14"
-          roughness={1.0}
-          metalness={0.0}
-        />
-      </mesh>
-      
-      {/* Lava Pool */}
-      <mesh ref={lavaPoolRef} position={[0, 8, 0]}>
-        <cylinderGeometry args={[6, 6, 3, 32]} />
-        <meshStandardMaterial
-          map={lavaTexture}
-          color="#ff4500"
-          emissive="#ff6347"
-          emissiveIntensity={2.0}
-          transparent
-          opacity={0.95}
-        />
-      </mesh>
-      
-      {/* Volcanic Smoke */}
-      <mesh ref={smokeRef} position={[0, 12, 0]}>
-        <sphereGeometry args={[5, 24, 24]} />
-        <meshBasicMaterial
-          color="#444444"
-          transparent
-          opacity={0.4}
-        />
-      </mesh>
-      
-      {/* Explosion Effect */}
-      <mesh ref={explosionRef} position={[0, 15, 0]}>
-        <sphereGeometry args={[5, 24, 24]} />
-        <meshBasicMaterial
-          color="#ffaa00"
-          transparent
-          opacity={0}
-        />
-      </mesh>
-    </group>
-  )
-}
 
-// LAVA FLOWS FROM LEFT BOTTOM VOLCANO
-function LeftBottomLavaFlows() {
-  const lavaFlowRefs = useRef([])
-  const lavaTexture = useTexture('/assets/images/lava-texture.jpg')
-  
-  useEffect(() => {
-    if (lavaTexture) {
-      lavaTexture.wrapS = RepeatWrapping
-      lavaTexture.wrapT = RepeatWrapping
-      lavaTexture.repeat.set(1, 4)
-    }
-  }, [lavaTexture])
-  
-  const flows = useMemo(() => [
-    { start: [-50, -25, -20], end: [-35, -28, -10], width: 2.0 },
-    { start: [-50, -25, -20], end: [-60, -28, -15], width: 1.5 },
-    { start: [-50, -25, -20], end: [-45, -28, -30], width: 1.8 },
-    { start: [-50, -25, -20], end: [-55, -28, -25], width: 1.6 }
-  ], [])
-  
-  useFrame((state) => {
-    const time = state.clock.elapsedTime
-    
-    lavaFlowRefs.current.forEach((ref, index) => {
-      if (ref) {
-        ref.material.emissiveIntensity = 1.5 + Math.sin(time * 5 + index) * 0.6
-        ref.material.opacity = 0.95 + Math.sin(time * 4 + index) * 0.05
+    const initDustParticles = () => {
+      dustParticlesRef.current = []
+      for (let i = 0; i < 100; i++) { // Reduced count
+        dustParticlesRef.current.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 1.5 + 0.5, // SMALLER: 0.5-2px instead of 1-5px
+          speedX: (Math.random() - 0.5) * 0.5,
+          speedY: (Math.random() - 0.5) * 0.5,
+          opacity: Math.random() * 0.4 + 0.3,
+          color: `rgba(255, 140, 60, ${Math.random() * 0.3 + 0.4})`
+        })
       }
-    })
-  })
-  
-  return (
-    <group>
-      {flows.map((flow, index) => {
-        const length = Math.sqrt(
-          Math.pow(flow.end[0] - flow.start[0], 2) +
-          Math.pow(flow.end[1] - flow.start[1], 2) +
-          Math.pow(flow.end[2] - flow.start[2], 2)
+    }
+
+    const initEmberParticles = () => {
+      emberParticlesRef.current = []
+      for (let i = 0; i < 80; i++) { // Reduced count
+        emberParticlesRef.current.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 3 + 1, // SMALLER: 1-4px instead of 3-11px
+          speedX: (Math.random() - 0.5) * 1.0,
+          speedY: (Math.random() - 0.5) * 1.0,
+          opacity: Math.random() * 0.4 + 0.5,
+          color: `hsl(${Math.random() * 40 + 5}, 85%, 65%)`,
+          life: Math.random() * 150 + 80,
+          trail: []
+        })
+      }
+    }
+
+    const initMeteorParticles = () => {
+      meteorParticlesRef.current = []
+      for (let i = 0; i < 12; i++) { // Reduced count
+        meteorParticlesRef.current.push({
+          x: Math.random() * canvas.width,
+          y: -50,
+          size: Math.random() * 4 + 2, // SMALLER: 2-6px instead of 4-14px
+          speedX: (Math.random() - 0.5) * 2,
+          speedY: Math.random() * 3 + 2,
+          opacity: Math.random() * 0.4 + 0.6,
+          color: `hsl(${Math.random() * 60 + 15}, 85%, 70%)`,
+          life: Math.random() * 200 + 100,
+          trail: []
+        })
+      }
+    }
+
+    const initStarParticles = () => {
+      starParticlesRef.current = []
+      for (let i = 0; i < 60; i++) { // Reduced count
+        starParticlesRef.current.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 1.5 + 0.5, // SMALLER: 0.5-2px instead of 1-4px
+          opacity: Math.random() * 0.5 + 0.3,
+          color: `hsl(${Math.random() * 60 + 40}, 70%, 80%)`,
+          twinkle: Math.random() * Math.PI * 2
+        })
+      }
+    }
+
+    initParticles()
+    initDustParticles()
+    initEmberParticles()
+    initMeteorParticles()
+    initStarParticles()
+
+    // OPTIMIZED ANIMATION WITH BETTER VISIBILITY
+    const animate = (timestamp) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      // VISIBLE background gradient
+      const gradient = ctx.createRadialGradient(
+        canvas.width * 0.3, canvas.height * 0.7, 0,
+        canvas.width * 0.3, canvas.height * 0.7, canvas.width * 0.8
+      )
+      gradient.addColorStop(0, '#8b4513')
+      gradient.addColorStop(0.3, '#654321')
+      gradient.addColorStop(0.6, '#4a2c17')
+      gradient.addColorStop(0.8, '#2f1b0c')
+      gradient.addColorStop(1, '#1a0f08')
+
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Subtle texture overlay
+      ctx.globalAlpha = 0.3
+      for (let i = 0; i < 200; i++) { // Reduced texture spots
+        ctx.fillStyle = `rgba(${180 + Math.random() * 40}, ${100 + Math.random() * 60}, ${30 + Math.random() * 40}, ${Math.random() * 0.3 + 0.1})`
+        ctx.fillRect(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height,
+          Math.random() * 4 + 2, // Smaller texture spots
+          Math.random() * 4 + 2
         )
+      }
+      ctx.globalAlpha = 1
+
+      const time = timestamp * 0.001
+
+      // Twinkling stars with smaller size
+      starParticlesRef.current.forEach((star, index) => {
+        star.twinkle += 0.03
+        const twinkleOpacity = star.opacity * (0.6 + Math.sin(star.twinkle) * 0.4)
         
-        return (
-          <mesh
-            key={index}
-            ref={(el) => (lavaFlowRefs.current[index] = el)}
-            position={[
-              (flow.start[0] + flow.end[0]) / 2,
-              (flow.start[1] + flow.end[1]) / 2,
-              (flow.start[2] + flow.end[2]) / 2
-            ]}
-            rotation={[
-              0,
-              0,
-              Math.atan2(flow.end[1] - flow.start[1], flow.end[0] - flow.start[0])
-            ]}
-          >
-            <cylinderGeometry args={[flow.width, flow.width * 0.3, length, 16]} />
-            <meshStandardMaterial
-              map={lavaTexture}
-              color="#ff4500"
-              emissive="#dc143c"
-              emissiveIntensity={1.5}
-              transparent
-              opacity={0.95}
-            />
-          </mesh>
-        )
-      })}
-    </group>
-  )
-}
+        ctx.globalAlpha = twinkleOpacity
+        ctx.fillStyle = star.color
+        ctx.shadowColor = star.color
+        ctx.shadowBlur = star.size * 2 // Reduced glow
+        ctx.beginPath()
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.shadowBlur = 0
+      })
 
-// VOLCANIC PARTICLES CONCENTRATED AROUND LEFT BOTTOM VOLCANO
-function LeftBottomVolcanicParticles({ isErupting }) {
-  const particlesRef = useRef()
-  const particleCount = 300
-  
-  const { positions, colors, sizes } = useMemo(() => {
-    const positions = new Float32Array(particleCount * 3)
-    const colors = new Float32Array(particleCount * 3)
-    const sizes = new Float32Array(particleCount)
-    
-    for (let i = 0; i < particleCount; i++) {
-      // Concentrate particles around left bottom volcano
-      positions[i * 3] = -50 + (Math.random() - 0.5) * 15
-      positions[i * 3 + 1] = -20 + Math.random() * 20
-      positions[i * 3 + 2] = -20 + (Math.random() - 0.5) * 12
-      
-      // Volcanic particle colors
-      colors[i * 3] = 0.8 + Math.random() * 0.2
-      colors[i * 3 + 1] = 0.4 + Math.random() * 0.3
-      colors[i * 3 + 2] = 0.1 + Math.random() * 0.2
-      
-      sizes[i] = Math.random() * 1.5 + 0.5
+      // Optimized volcano
+      const volcanoX = canvas.width * 0.15
+      const volcanoY = canvas.height * 0.75
+
+      // Less frequent eruption for better performance
+      if (Math.sin(time * 0.4) > 0.3) {
+        volcanoRef.current.erupting = true
+        volcanoRef.current.intensity = Math.min(volcanoRef.current.intensity + 0.04, 1)
+      } else {
+        volcanoRef.current.erupting = false
+        volcanoRef.current.intensity = Math.max(volcanoRef.current.intensity - 0.02, 0)
+      }
+
+      // Volcano shape
+      ctx.fillStyle = '#654321'
+      ctx.beginPath()
+      ctx.moveTo(volcanoX - 80, volcanoY)
+      ctx.lineTo(volcanoX, volcanoY - 120)
+      ctx.lineTo(volcanoX + 80, volcanoY)
+      ctx.closePath()
+      ctx.fill()
+
+      // Volcano glow (optimized)
+      if (volcanoRef.current.intensity > 0) {
+        const innerGlow = ctx.createRadialGradient(volcanoX, volcanoY - 100, 0, volcanoX, volcanoY - 100, 80)
+        innerGlow.addColorStop(0, `rgba(255, 120, 30, ${volcanoRef.current.intensity * 0.8})`)
+        innerGlow.addColorStop(0.5, `rgba(255, 160, 60, ${volcanoRef.current.intensity * 0.5})`)
+        innerGlow.addColorStop(1, 'rgba(255, 160, 60, 0)')
+        
+        ctx.fillStyle = innerGlow
+        ctx.fillRect(volcanoX - 80, volcanoY - 180, 160, 160)
+
+        // Eruption particles (smaller and fewer)
+        if (volcanoRef.current.erupting) {
+          for (let i = 0; i < 30; i++) { // Reduced particles
+            const px = volcanoX + (Math.random() - 0.5) * 80
+            const py = volcanoY - 100 + Math.random() * 40
+            const size = Math.random() * 4 + 1 // SMALLER eruption particles
+            
+            ctx.fillStyle = `rgba(255, ${Math.random() * 40 + 140}, 30, ${Math.random() * 0.4 + 0.5})`
+            ctx.beginPath()
+            ctx.arc(px, py, size, 0, Math.PI * 2)
+            ctx.fill()
+
+            ctx.shadowColor = `rgba(255, ${Math.random() * 40 + 140}, 30, 0.8)`
+            ctx.shadowBlur = 8 // Reduced glow
+            ctx.fill()
+            ctx.shadowBlur = 0
+          }
+        }
+      }
+
+      // Optimized lightning
+      if (Math.random() < 0.004 && volcanoRef.current.erupting) {
+        lightningRef.current.strikes.push({
+          x: volcanoX + (Math.random() - 0.5) * 160,
+          y: volcanoY - 160,
+          life: 12,
+          branches: Math.floor(Math.random() * 2) + 1
+        })
+      }
+
+      lightningRef.current.strikes = lightningRef.current.strikes.filter(strike => {
+        strike.life--
+        if (strike.life > 0) {
+          ctx.strokeStyle = `rgba(255, 255, 255, ${strike.life / 12})`
+          ctx.lineWidth = 3
+          ctx.shadowColor = 'rgba(255, 255, 255, 0.8)'
+          ctx.shadowBlur = 10
+          
+          for (let b = 0; b < strike.branches; b++) {
+            ctx.beginPath()
+            ctx.moveTo(strike.x + b * 20, strike.y)
+            ctx.lineTo(strike.x + (Math.random() - 0.5) * 120 + b * 20, strike.y + 120)
+            ctx.stroke()
+          }
+          
+          ctx.shadowBlur = 0
+          return true
+        }
+        return false
+      })
+
+      // Main particles with smaller trails
+      particlesRef.current.forEach((particle, index) => {
+        particle.trail.push({ x: particle.x, y: particle.y, opacity: particle.opacity })
+        if (particle.trail.length > 6) particle.trail.shift() // Shorter trails
+
+        particle.pulse += 0.03
+        particle.x += particle.speedX + Math.sin(time + index) * 0.2
+        particle.y += particle.speedY + Math.cos(time + index) * 0.2
+
+        if (particle.x > canvas.width) particle.x = 0
+        if (particle.x < 0) particle.x = canvas.width
+        if (particle.y > canvas.height) particle.y = 0
+        if (particle.y < 0) particle.y = canvas.height
+
+        // Draw smaller trail
+        particle.trail.forEach((point, i) => {
+          ctx.globalAlpha = (point.opacity * (i / particle.trail.length)) * 0.6
+          ctx.fillStyle = particle.color
+          ctx.shadowColor = particle.color
+          ctx.shadowBlur = particle.size * 1.5 // Reduced glow
+          ctx.beginPath()
+          ctx.arc(point.x, point.y, particle.size * (i / particle.trail.length), 0, Math.PI * 2)
+          ctx.fill()
+          ctx.shadowBlur = 0
+        })
+
+        // Main particle
+        const pulseOpacity = particle.opacity * (0.8 + Math.sin(particle.pulse) * 0.2)
+        ctx.globalAlpha = pulseOpacity
+        ctx.fillStyle = particle.color
+        
+        ctx.shadowColor = particle.color
+        ctx.shadowBlur = particle.size * 3 // Reduced glow
+        
+        ctx.beginPath()
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
+        ctx.fill()
+        
+        ctx.shadowBlur = 0
+      })
+
+      // Dust particles (smaller)
+      dustParticlesRef.current.forEach((particle, index) => {
+        particle.x += particle.speedX + Math.sin(time * 0.8 + index) * 0.1
+        particle.y += particle.speedY + Math.cos(time * 0.8 + index) * 0.1
+
+        if (particle.x > canvas.width) particle.x = 0
+        if (particle.x < 0) particle.x = canvas.width
+        if (particle.y > canvas.height) particle.y = 0
+        if (particle.y < 0) particle.y = canvas.height
+
+        ctx.globalAlpha = particle.opacity
+        ctx.fillStyle = particle.color
+        ctx.shadowColor = particle.color
+        ctx.shadowBlur = particle.size * 2 // Reduced glow
+        ctx.beginPath()
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.shadowBlur = 0
+      })
+
+      // Ember particles (smaller)
+      emberParticlesRef.current.forEach((particle, index) => {
+        particle.trail.push({ x: particle.x, y: particle.y, opacity: particle.opacity })
+        if (particle.trail.length > 5) particle.trail.shift() // Shorter trails
+
+        particle.x += particle.speedX
+        particle.y += particle.speedY
+        particle.life--
+
+        if (particle.life <= 0 || particle.x < 0 || particle.x > canvas.width || particle.y < 0 || particle.y > canvas.height) {
+          particle.x = Math.random() * canvas.width
+          particle.y = Math.random() * canvas.height
+          particle.life = Math.random() * 150 + 80
+          particle.trail = []
+        }
+
+        // Smaller trail
+        particle.trail.forEach((point, i) => {
+          ctx.globalAlpha = (particle.opacity * (particle.life / 150)) * (i / particle.trail.length) * 0.7
+          ctx.fillStyle = particle.color
+          ctx.shadowColor = particle.color
+          ctx.shadowBlur = particle.size * 1.5
+          ctx.beginPath()
+          ctx.arc(point.x, point.y, particle.size * (i / particle.trail.length), 0, Math.PI * 2)
+          ctx.fill()
+          ctx.shadowBlur = 0
+        })
+
+        ctx.globalAlpha = particle.opacity * (particle.life / 150)
+        ctx.fillStyle = particle.color
+        ctx.shadowColor = particle.color
+        ctx.shadowBlur = particle.size * 3 // Reduced glow
+        ctx.beginPath()
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.shadowBlur = 0
+      })
+
+      // Meteors (smaller)
+      meteorParticlesRef.current.forEach((particle, index) => {
+        particle.trail.push({ x: particle.x, y: particle.y, opacity: particle.opacity })
+        if (particle.trail.length > 8) particle.trail.shift() // Shorter trails
+
+        particle.x += particle.speedX
+        particle.y += particle.speedY
+        particle.life--
+
+        if (particle.life <= 0 || particle.y > canvas.height + 50) {
+          particle.x = Math.random() * canvas.width
+          particle.y = -50
+          particle.life = Math.random() * 200 + 100
+          particle.trail = []
+        }
+
+        // Smaller meteor trail
+        particle.trail.forEach((point, i) => {
+          ctx.globalAlpha = (particle.opacity * (particle.life / 200)) * (i / particle.trail.length) * 0.8
+          ctx.fillStyle = particle.color
+          ctx.shadowColor = particle.color
+          ctx.shadowBlur = 8 // Reduced trail glow
+          ctx.beginPath()
+          ctx.arc(point.x, point.y, particle.size * (i / particle.trail.length), 0, Math.PI * 2)
+          ctx.fill()
+          ctx.shadowBlur = 0
+        })
+
+        // Main meteor
+        ctx.globalAlpha = particle.opacity * (particle.life / 200)
+        ctx.fillStyle = particle.color
+        ctx.shadowColor = particle.color
+        ctx.shadowBlur = particle.size * 2 // Reduced glow
+        ctx.beginPath()
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.shadowBlur = 0
+      })
+
+      ctx.globalAlpha = 1
+
+      // Optimized revolving Mars (smaller)
+      const marsX = canvas.width * 0.85
+      const marsY = canvas.height * 0.25
+      const marsRadius = 60 + Math.sin(time * 0.5) * 10 // Smaller Mars
+
+      const revolutionX = marsX + Math.sin(time * 0.2) * 30
+      const revolutionY = marsY + Math.cos(time * 0.15) * 20
+
+      // Fallback Mars (no image loading for better performance)
+      const marsGradient = ctx.createRadialGradient(revolutionX - 20, revolutionY - 20, 0, revolutionX, revolutionY, marsRadius)
+      marsGradient.addColorStop(0, '#ff9966')
+      marsGradient.addColorStop(0.4, '#ff7744')
+      marsGradient.addColorStop(0.8, '#cc5522')
+      marsGradient.addColorStop(1, '#aa3311')
+
+      ctx.fillStyle = marsGradient
+      ctx.shadowColor = '#ff6633'
+      ctx.shadowBlur = 15 // Reduced glow
+      ctx.beginPath()
+      ctx.arc(revolutionX, revolutionY, marsRadius, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.shadowBlur = 0
+
+      // Mars atmosphere (smaller)
+      for (let i = 0; i < 3; i++) {
+        ctx.globalAlpha = 0.2 - i * 0.05
+        ctx.fillStyle = '#ff6633'
+        ctx.shadowColor = '#ff6633'
+        ctx.shadowBlur = 8
+        ctx.beginPath()
+        ctx.arc(revolutionX, revolutionY, marsRadius + 10 + i * 8, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.shadowBlur = 0
+      }
+
+      ctx.globalAlpha = 1
+
+      animationId = requestAnimationFrame(animate)
     }
-    
-    return { positions, colors, sizes }
-  }, [])
-  
-  useEffect(() => {
-    if (!particlesRef.current) return
-    
-    particlesRef.current.geometry.setAttribute('position', new BufferAttribute(positions, 3))
-    particlesRef.current.geometry.setAttribute('color', new BufferAttribute(colors, 3))
-    particlesRef.current.geometry.setAttribute('size', new BufferAttribute(sizes, 1))
-  }, [positions, colors, sizes])
-  
-  useFrame((state) => {
-    if (!particlesRef.current) return
-    
-    const positionArray = particlesRef.current.geometry.attributes.position.array
-    const time = state.clock.elapsedTime
-    
-    const intensity = isErupting ? 2.0 : 0.8
-    
-    for (let i = 0; i < particleCount; i++) {
-      const i3 = i * 3
-      
-      // Particle movement
-      positionArray[i3] += Math.sin(time * 0.8 + i * 0.03) * 0.02 * intensity
-      positionArray[i3 + 1] += 0.05 * intensity
-      positionArray[i3 + 2] += Math.cos(time * 0.6 + i * 0.02) * 0.015 * intensity
-      
-      // Reset particles that go too high
-      if (positionArray[i3 + 1] > 15) {
-        positionArray[i3] = -50 + (Math.random() - 0.5) * 15
-        positionArray[i3 + 1] = -20 + Math.random() * 3
-        positionArray[i3 + 2] = -20 + (Math.random() - 0.5) * 12
+
+    animationId = requestAnimationFrame(animate)
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas)
+      if (animationId) {
+        cancelAnimationFrame(animationId)
       }
     }
-    
-    particlesRef.current.geometry.attributes.position.needsUpdate = true
-  })
-  
+  }, [])
+
   return (
-    <points ref={particlesRef}>
-      <bufferGeometry />
-      <pointsMaterial
-        size={1.0}
-        vertexColors
-        transparent
-        opacity={0.6}
-        blending={AdditiveBlending}
-        sizeAttenuation={true}
-      />
-    </points>
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: -1, // Behind video but visible
+        pointerEvents: 'none'
+      }}
+    />
   )
 }
 
-// MARS PLANET 3D COMPONENT
-function Mars3D() {
-  const marsRef = useRef()
-  const marsTexture = useTexture('/assets/images/mars-background.jpg')
-  
-  useEffect(() => {
-    if (marsTexture) {
-      marsTexture.wrapS = RepeatWrapping
-      marsTexture.wrapT = RepeatWrapping
-    }
-  }, [marsTexture])
-  
-  useFrame((state) => {
-    if (marsRef.current) {
-      marsRef.current.rotation.y += 0.008
-      marsRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.6) * 0.8
-    }
-  })
-  
-  return (
-    <Float speed={1.2} rotationIntensity={0.15} floatIntensity={0.3}>
-      <mesh ref={marsRef} position={[40, 8, -18]}>
-        <sphereGeometry args={[5, 32, 32]} />
-        <meshStandardMaterial
-          map={marsTexture}
-          roughness={0.8}
-          metalness={0.1}
-        />
-      </mesh>
-    </Float>
-  )
-}
-
-// MARS MOONS
-function MarsMoons() {
-  const phobosRef = useRef()
-  const deimosRef = useRef()
-  
-  useFrame((state) => {
-    if (phobosRef.current) {
-      const time = state.clock.elapsedTime
-      phobosRef.current.position.x = 40 + Math.cos(time * 1.0) * 10
-      phobosRef.current.position.z = -18 + Math.sin(time * 1.0) * 10
-      phobosRef.current.position.y = 8 + Math.sin(time * 1.0) * 1.5
-    }
-    
-    if (deimosRef.current) {
-      const time = state.clock.elapsedTime
-      deimosRef.current.position.x = 40 + Math.cos(time * 0.5) * 15
-      deimosRef.current.position.z = -18 + Math.sin(time * 0.5) * 15
-      deimosRef.current.position.y = 8 + Math.cos(time * 0.5) * 1.2
-    }
-  })
-  
-  return (
-    <group>
-      <mesh ref={phobosRef}>
-        <sphereGeometry args={[0.6, 16, 16]} />
-        <meshStandardMaterial color="#8b7355" roughness={0.9} />
-      </mesh>
-      <mesh ref={deimosRef}>
-        <sphereGeometry args={[0.5, 16, 16]} />
-        <meshStandardMaterial color="#a0522d" roughness={0.9} />
-      </mesh>
-    </group>
-  )
-}
-
-// MARS ATMOSPHERE
-function MarsAtmosphere() {
-  const atmosphereRef = useRef()
-  
-  useFrame((state) => {
-    if (atmosphereRef.current) {
-      atmosphereRef.current.rotation.y += 0.003
-      const scale = 1 + Math.sin(state.clock.elapsedTime * 0.4) * 0.08
-      atmosphereRef.current.scale.setScalar(scale)
-    }
-  })
-  
-  return (
-    <mesh ref={atmosphereRef} position={[40, 8, -18]}>
-      <sphereGeometry args={[5.5, 32, 32]} />
-      <meshStandardMaterial
-        color="#ff6b35"
-        transparent
-        opacity={0.15}
-        side={DoubleSide}
-      />
-    </mesh>
-  )
-}
-
-// CAMERA CONTROLLER WITH SHAKE
-function CameraController({ shakeIntensity }) {
-  const { camera } = useThree()
-  
-  useEffect(() => {
-    camera.position.set(0, 0, 25)
-    camera.lookAt(0, 0, 0)
-  }, [camera])
-  
-  useFrame(() => {
-    // Screen shake during eruptions
-    const shakeX = (Math.random() - 0.5) * shakeIntensity * 0.12
-    const shakeY = (Math.random() - 0.5) * shakeIntensity * 0.06
-    
-    camera.position.set(shakeX, shakeY, 25)
-    camera.lookAt(0, 0, 0)
-  })
-  
-  return null
-}
-
-// 3D SCENE COMPONENT
-function Mars3DScene({ shakeIntensity, setShakeIntensity }) {
-  const [isErupting, setIsErupting] = useState(false)
-  
-  const handleEruption = (erupting) => {
-    setIsErupting(erupting)
-  }
-  
-  const handleShake = (shaking) => {
-    setShakeIntensity(shaking ? 0.25 : 0)
-  }
-  
-  return (
-    <>
-      <CameraController shakeIntensity={shakeIntensity} />
-      
-      {/* Enhanced Lighting */}
-      <ambientLight intensity={0.5} color="#ff6347" />
-      <pointLight position={[25, 25, 25]} intensity={2.0} color="#ffa500" />
-      <directionalLight position={[-25, 15, 15]} intensity={1.2} color="#ff6b35" />
-      <pointLight position={[-50, 20, -20]} intensity={6} color="#ff4500" />
-      <spotLight
-        position={[-50, 50, -20]}
-        angle={0.25}
-        penumbra={0.4}
-        intensity={5}
-        color="#ff6347"
-        target-position={[-50, -25, -20]}
-      />
-      
-      <Stars
-        radius={400}
-        depth={200}
-        count={4000}
-        factor={10}
-        saturation={0.8}
-        fade
-        speed={0.15}
-      />
-      
-      <MarsBackgroundSurface />
-      <LeftBottomVolcano onEruption={handleEruption} onShake={handleShake} />
-      <LeftBottomLavaFlows />
-      <LeftBottomVolcanicParticles isErupting={isErupting} />
-      <Mars3D />
-      <MarsMoons />
-      <MarsAtmosphere />
-      
-      {/* Atmospheric Fog */}
-      <fog attach="fog" args={['#1a0f0a', 50, 150]} />
-    </>
-  )
-}
-
-// MARS LOADING SCREEN
-function MarsLoadingScreen({ isLoading }) {
+// ENHANCED LOADING SCREEN (ORIGINAL SIZE)
+const EnhancedMarsLoadingScreen = ({ isLoading }) => {
   if (!isLoading) return null
-  
+
   return (
     <motion.div
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 1 }}
+      transition={{ duration: 1.2 }}
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'linear-gradient(135deg, #1a0f0a 0%, #2d1810 25%, #4a2c1a 50%, #2d1810 75%, #1a0f0a 100%)',
+        background: 'linear-gradient(135deg, #2d1810 0%, #4a2c1a 25%, #6b3d1f 50%, #4a2c1a 75%, #2d1810 100%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -566,26 +544,25 @@ function MarsLoadingScreen({ isLoading }) {
         zIndex: 1000
       }}
     >
-      {/* Mars Loading Animation */}
       <motion.div
         animate={{ 
           rotate: 360,
-          scale: [1, 1.1, 1]
+          scale: [1, 1.3, 1]
         }}
         transition={{ 
-          rotate: { duration: 4, repeat: Infinity, ease: "linear" },
+          rotate: { duration: 2.5, repeat: Infinity, ease: "linear" },
           scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
         }}
         style={{
           width: '120px',
           height: '120px',
           borderRadius: '50%',
-          background: 'conic-gradient(from 0deg, #ff6b35, #d2691e, #cd853f, #a0522d, #ff6b35)',
+          background: 'conic-gradient(from 0deg, #ff6b35, #ff8c42, #ffa500, #ff6b35)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: '2rem',
-          boxShadow: '0 0 40px rgba(255, 107, 53, 0.6)'
+          marginBottom: '1.5rem',
+          boxShadow: '0 0 50px rgba(255, 107, 53, 1.0), 0 0 100px rgba(255, 107, 53, 0.6), 0 0 150px rgba(255, 107, 53, 0.3)'
         }}
       >
         <div style={{
@@ -597,93 +574,257 @@ function MarsLoadingScreen({ isLoading }) {
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          <div style={{
-            width: '50px',
-            height: '50px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #2d1810, #1a0f0a)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <motion.div
-              animate={{ scale: [0.8, 1.2, 0.8] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              style={{
-                width: '20px',
-                height: '20px',
-                borderRadius: '50%',
-                background: '#ff4500',
-                boxShadow: '0 0 15px #ff4500'
-              }}
-            />
-          </div>
+          <motion.div
+            animate={{ scale: [0.8, 1.6, 0.8] }}
+            transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              background: '#ff4500',
+              boxShadow: '0 0 30px #ff4500, 0 0 60px #ff4500, 0 0 90px #ff4500'
+            }}
+          />
         </div>
       </motion.div>
       
-      {/* Loading Text */}
-      <motion.div
-        animate={{ opacity: [0.5, 1, 0.5] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      <motion.h1
+        animate={{ opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
         style={{
           color: '#ff6b35',
           fontSize: '1.8rem',
           fontFamily: 'Orbitron, monospace',
           fontWeight: '700',
           textAlign: 'center',
-          marginBottom: '1rem',
+          marginBottom: '0.8rem',
           letterSpacing: '0.1em',
-          textShadow: '0 0 20px rgba(255, 107, 53, 0.5)'
+          textShadow: '0 0 20px rgba(255, 107, 53, 0.8), 0 0 40px rgba(255, 107, 53, 0.4), 0 0 60px rgba(255, 107, 53, 0.2)'
         }}
       >
-        MARS SYSTEM INITIALIZING
-      </motion.div>
+        MARS SYSTEM LOADING
+      </motion.h1>
       
-      <motion.div
-        animate={{ opacity: [0.3, 0.8, 0.3] }}
+      <motion.p
+        animate={{ opacity: [0.4, 0.9, 0.4] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
         style={{
           color: '#ffa500',
-          fontSize: '1.1rem',
+          fontSize: '1rem',
           fontFamily: 'Inter, sans-serif',
-          fontWeight: '400',
           textAlign: 'center',
-          opacity: 0.8
+          textShadow: '0 0 10px rgba(255, 165, 0, 0.6)'
         }}
       >
-        Loading volcanic environment...
-      </motion.div>
-      
-      {/* Loading Progress Bar */}
-      <div style={{
-        width: '300px',
-        height: '4px',
-        background: 'rgba(255, 107, 53, 0.2)',
-        borderRadius: '2px',
-        marginTop: '2rem',
-        overflow: 'hidden'
-      }}>
+        Initializing volcanic environment...
+      </motion.p>
+    </motion.div>
+  )
+}
+
+// ENHANCED EXPERIENCE CARD (ORIGINAL SIZE AND EFFECTS)
+const EnhancedExperienceCard = ({ job, index, isMobile, onSelect }) => {
+  const [isHovered, setIsHovered] = useState(false)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ 
+        duration: 0.8,
+        delay: 3.2 + index * 0.2,
+        type: "spring",
+        stiffness: 100
+      }}
+      style={{
+        background: 'rgba(0, 0, 0, 0.7)',
+        backdropFilter: 'blur(25px)',
+        border: `3px solid ${job.color}60`,
+        borderRadius: '1.25rem',
+        padding: isMobile ? '1.8rem' : '2.2rem',
+        cursor: 'pointer',
+        position: 'relative',
+        overflow: 'hidden',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: isHovered ? 
+          `0 20px 40px ${job.color}60, 0 0 40px ${job.color}40, inset 0 0 25px ${job.color}15` : 
+          `0 10px 20px rgba(0, 0, 0, 0.4), 0 0 15px ${job.color}20`
+      }}
+      onClick={() => onSelect(job)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      whileHover={{ 
+        scale: 1.04,
+        y: -10,
+        boxShadow: `0 25px 50px ${job.color}70, 0 0 50px ${job.color}50, inset 0 0 30px ${job.color}20`
+      }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <motion.div
+        initial={{ x: '-100%' }}
+        animate={{ x: isHovered ? '100%' : '-100%' }}
+        transition={{ duration: 0.8, ease: "easeInOut" }}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: `linear-gradient(90deg, transparent, ${job.color}30, transparent)`,
+          pointerEvents: 'none'
+        }}
+      />
+
+      {[...Array(3)].map((_, i) => (
         <motion.div
-          animate={{ x: ['-100%', '100%'] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          key={i}
+          animate={{ 
+            opacity: isHovered ? [0, 1, 0] : 0,
+            scale: isHovered ? [0.5, 1.5, 0.5] : 0.5,
+            x: isHovered ? [0, (i - 1) * 25, 0] : 0,
+            y: isHovered ? [0, -12 - i * 4, 0] : 0
+          }}
+          transition={{ 
+            duration: 1.8 + i * 0.4, 
+            repeat: isHovered ? Infinity : 0,
+            delay: i * 0.2
+          }}
           style={{
-            width: '50%',
-            height: '100%',
-            background: 'linear-gradient(90deg, transparent, #ff6b35, transparent)',
-            borderRadius: '2px'
+            position: 'absolute',
+            top: `${15 + i * 8}px`,
+            right: `${10 + i * 6}px`,
+            width: '10px',
+            height: '10px',
+            background: job.color,
+            borderRadius: '50%',
+            boxShadow: `0 0 20px ${job.color}, 0 0 40px ${job.color}50`,
+            pointerEvents: 'none'
           }}
         />
+      ))}
+
+      <div style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        marginBottom: '1.3rem',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', marginBottom: '0.9rem' }}>
+            <motion.img 
+              src={job.icon} 
+              alt={job.title}
+              style={{
+                width: isMobile ? '42px' : '50px',
+                height: isMobile ? '42px' : '50px',
+                borderRadius: '10px',
+                objectFit: 'cover',
+                border: `3px solid ${job.color}`,
+                boxShadow: `0 0 20px ${job.color}60, 0 0 40px ${job.color}25`
+              }}
+              whileHover={{ scale: 1.15, rotate: 8 }}
+              loading="lazy"
+            />
+            <h3 style={{
+              fontSize: isMobile ? '1.05rem' : '1.25rem',
+              fontWeight: '700',
+              color: job.color,
+              fontFamily: 'Orbitron, monospace',
+              textShadow: `0 0 15px ${job.color}70, 0 0 30px ${job.color}35`
+            }}>
+              {job.title}
+            </h3>
+          </div>
+          <p style={{
+            fontSize: isMobile ? '0.85rem' : '1rem',
+            color: '#ffffff',
+            fontWeight: '600',
+            marginBottom: '0.4rem'
+          }}>
+            {job.company}
+          </p>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#cccccc',
+            fontWeight: '400'
+          }}>
+            {job.period} • {job.location}
+          </p>
+        </div>
+        <motion.div 
+          animate={{ 
+            height: isHovered ? '75px' : '60px',
+            boxShadow: isHovered ? `0 0 25px ${job.color}80` : `0 0 12px ${job.color}40`
+          }}
+          style={{
+            width: '4px',
+            background: `linear-gradient(to bottom, ${job.color}, transparent)`,
+            borderRadius: '2px'
+          }} 
+        />
+      </div>
+
+      <p style={{
+        fontSize: isMobile ? '0.8rem' : '0.95rem',
+        color: '#e0e0e0',
+        lineHeight: '1.6',
+        marginBottom: '1.8rem',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        {job.description}
+      </p>
+
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <motion.span 
+          animate={{ 
+            color: isHovered ? job.color : '#cccccc',
+            textShadow: isHovered ? `0 0 12px ${job.color}80` : 'none'
+          }}
+          style={{
+            fontSize: '0.85rem',
+            fontWeight: '600',
+            letterSpacing: '0.05em'
+          }}
+        >
+          VIEW ACHIEVEMENTS →
+        </motion.span>
+        <motion.div
+          whileHover={{ scale: 1.25, rotate: 180 }}
+          style={{
+            width: '2rem',
+            height: '2rem',
+            borderRadius: '50%',
+            background: `linear-gradient(45deg, ${job.color}, ${job.color}80)`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1rem',
+            color: 'white',
+            fontWeight: 'bold',
+            boxShadow: `0 0 20px ${job.color}70, 0 0 40px ${job.color}35`
+          }}
+        >
+          →
+        </motion.div>
       </div>
     </motion.div>
   )
 }
 
 // MAIN COMPONENT
-const MarsWorkExperienceLeftBottomVolcanoComponent = () => {
+const FinalMarsWorkExperienceComponent = () => {
   const [selectedJob, setSelectedJob] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [shakeIntensity, setShakeIntensity] = useState(0)
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -693,16 +834,99 @@ const MarsWorkExperienceLeftBottomVolcanoComponent = () => {
     checkScreenSize()
     window.addEventListener('resize', checkScreenSize)
     
-    // Loading timer
     const loadingTimer = setTimeout(() => {
       setIsLoading(false)
-    }, 4000)
+    }, 2800)
     
     return () => {
       window.removeEventListener('resize', checkScreenSize)
       clearTimeout(loadingTimer)
     }
   }, [])
+
+  const styles = useMemo(() => ({
+    container: {
+      minHeight: '100vh',
+      position: 'relative',
+      color: 'white',
+      fontFamily: 'Inter, sans-serif',
+      overflow: 'hidden'
+    },
+    content: {
+      position: 'relative',
+      zIndex: 10,
+      padding: isMobile ? '1.8rem 1rem' : '2.5rem 1.8rem',
+      maxWidth: '1400px',
+      margin: '0 auto',
+      paddingTop: isMobile ? '1rem' : '1.5rem' // Reduced top padding to move content up
+    },
+    header: {
+      textAlign: 'center',
+      marginBottom: '2.5rem', // Reduced margin to move content up
+      marginTop: isMobile ? '1.5rem' : '0.5rem' // Reduced top margin to move header up
+    },
+    title: {
+      fontSize: isMobile ? '2rem' : '3.5rem',
+      fontWeight: '900',
+      fontFamily: 'Orbitron, monospace',
+      background: 'linear-gradient(45deg, #ff6b35, #ffa500, #ff8c42, #ff6b35)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+      backgroundSize: '200% 200%',
+      marginBottom: '0.7rem', // Reduced margin
+      textShadow: '0 0 40px rgba(255, 107, 53, 0.8), 0 0 80px rgba(255, 107, 53, 0.4)',
+      animation: 'gradientShift 4s ease-in-out infinite'
+    },
+    subtitle: {
+      fontSize: isMobile ? '1rem' : '1.25rem',
+      color: '#ffa500',
+      fontWeight: '300',
+      maxWidth: '750px',
+      margin: '0 auto',
+      lineHeight: '1.6',
+      textShadow: '0 0 15px rgba(255, 165, 0, 0.5)'
+    },
+    grid: {
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(460px, 1fr))',
+      gap: '2.2rem',
+      marginBottom: '2.5rem'
+    },
+    marsIndicator: {
+      position: 'absolute',
+      top: '1.8rem',
+      left: '1.8rem',
+      zIndex: 30
+    },
+    indicatorContent: {
+      background: 'rgba(0, 0, 0, 0.7)',
+      backdropFilter: 'blur(25px)',
+      border: '3px solid rgba(255, 107, 53, 0.6)',
+      borderRadius: '0.7rem',
+      padding: '0.9rem 1.3rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.7rem',
+      boxShadow: '0 0 20px rgba(255, 107, 53, 0.3)'
+    },
+    pulseIndicator: {
+      width: '12px',
+      height: '12px',
+      backgroundColor: '#ff6b35',
+      borderRadius: '50%',
+      boxShadow: '0 0 20px #ff6b35, 0 0 40px #ff6b35, 0 0 60px #ff6b35',
+      animation: 'pulse 2s infinite'
+    },
+    indicatorText: {
+      color: '#ff6b35',
+      fontSize: '0.85rem',
+      fontFamily: 'Orbitron, monospace',
+      fontWeight: '700',
+      letterSpacing: '0.05em',
+      textShadow: '0 0 10px rgba(255, 107, 53, 0.6)'
+    }
+  }), [isMobile])
 
   useEffect(() => {
     const style = document.createElement('style')
@@ -713,30 +937,68 @@ const MarsWorkExperienceLeftBottomVolcanoComponent = () => {
         margin: 0;
         padding: 0;
         overflow-x: hidden;
+        background: #1a0f0a;
       }
       
-      .mars-gradient {
-        background: linear-gradient(135deg, #1a0f0a 0%, #2d1810 25%, #4a2c1a 50%, #2d1810 75%, #1a0f0a 100%);
+      /* Hide scrollbar but maintain functionality */
+      html, body {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+        overflow-y: auto;
       }
       
-      .glass-effect {
-        backdrop-filter: blur(20px);
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 107, 53, 0.2);
+      html::-webkit-scrollbar, body::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+        display: none; /* Chrome, Safari, Opera */
       }
       
-      .experience-card {
-        transition: all 0.3s ease;
+      * {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
       }
       
-      .experience-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 40px rgba(255, 107, 53, 0.2);
+      *::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+        display: none;
       }
       
-      .shake-effect {
-        transform: ${shakeIntensity > 0 ? `translate(${(Math.random() - 0.5) * shakeIntensity * 10}px, ${(Math.random() - 0.5) * shakeIntensity * 5}px)` : 'none'};
-        transition: transform 0.1s ease-out;
+      @keyframes gradientShift {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+      }
+      
+      @keyframes pulse {
+        0%, 100% { 
+          opacity: 1; 
+          transform: scale(1); 
+          box-shadow: 0 0 20px #ff6b35, 0 0 40px #ff6b35, 0 0 60px #ff6b35;
+        }
+        50% { 
+          opacity: 0.8; 
+          transform: scale(1.3); 
+          box-shadow: 0 0 30px #ff6b35, 0 0 60px #ff6b35, 0 0 90px #ff6b35;
+        }
+      }
+      
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        overflow: hidden;
+      }
+      .no-scrollbar::-webkit-scrollbar { 
+        display: none;
+        width: 0;
+        height: 0;
+      }
+      
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
       }
     `
     document.head.appendChild(style)
@@ -746,250 +1008,80 @@ const MarsWorkExperienceLeftBottomVolcanoComponent = () => {
         document.head.removeChild(style)
       }
     }
-  }, [shakeIntensity])
+  }, [])
 
   return (
     <>
       <AnimatePresence>
-        <MarsLoadingScreen isLoading={isLoading} />
+        <EnhancedMarsLoadingScreen isLoading={isLoading} />
       </AnimatePresence>
-      
-      <div className="mars-gradient" style={{
-        minHeight: '100vh',
-        position: 'relative',
-        color: 'white',
-        fontFamily: 'Inter, sans-serif'
-      }}>
-        {/* 3D Background */}
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          zIndex: 0,
-          pointerEvents: 'none'
-        }}>
-          <Canvas
-            camera={{ position: [0, 0, 25], fov: 75 }}
-            style={{ width: '100%', height: '100%' }}
-            gl={{ antialias: true, alpha: true }}
-          >
-            <Suspense fallback={null}>
-              <Mars3DScene 
-                shakeIntensity={shakeIntensity}
-                setShakeIntensity={setShakeIntensity}
-              />
-            </Suspense>
-          </Canvas>
-        </div>
 
-        {/* Mars Mode Indicator */}
-        <div style={{
-          position: 'absolute',
-          top: '2rem',
-          left: '2rem',
-          zIndex: 30
-        }} className="shake-effect">
+      <OptimizedMarsBackground />
+      
+      <div style={styles.container} className="no-scrollbar">
+        {/* RE-INTEGRATED VIDEO BACKGROUND */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 0, // Above canvas but below content
+            opacity: 0.6 // Slightly transparent to blend with canvas
+          }}
+        >
+          <source src="/assets/images/volcano-eruption.mp4" type="video/mp4" />
+        </video>
+
+        <div style={styles.marsIndicator}>
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1.2, delay: 4.5 }}
-            className="glass-effect"
-            style={{
-              borderRadius: '0.75rem',
-              padding: '1rem 1.25rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem'
-            }}
+            transition={{ duration: 1.2, delay: 3.2 }}
+            style={styles.indicatorContent}
           >
-            <div style={{
-              width: '10px',
-              height: '10px',
-              backgroundColor: '#ff6b35',
-              borderRadius: '50%',
-              animation: 'pulse 2s infinite',
-              boxShadow: '0 0 10px #ff6b35'
-            }} />
-            <span style={{
-              color: '#ff6b35',
-              fontSize: '1rem',
-              fontFamily: 'Orbitron, monospace',
-              fontWeight: '700',
-              letterSpacing: '0.05em'
-            }}>
-              MARS MODE ON
+            <div style={styles.pulseIndicator} />
+            <span style={styles.indicatorText}>
+              MARS MODE 
             </span>
           </motion.div>
         </div>
 
-        {/* Main Content */}
-        <div style={{
-          position: 'relative',
-          zIndex: 10,
-          padding: isMobile ? '2rem 1rem' : '3rem 2rem',
-          maxWidth: '1200px',
-          margin: '0 auto'
-        }} className="shake-effect">
-          {/* Header */}
+        <div style={styles.content}>
           <motion.div
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 4.8 }}
-            style={{
-              textAlign: 'center',
-              marginBottom: '3rem'
-            }}
+            transition={{ duration: 1, delay: 3.5 }}
+            style={styles.header}
           >
-            <h1 style={{
-              fontSize: isMobile ? '2.5rem' : '4rem',
-              fontWeight: '900',
-              fontFamily: 'Orbitron, monospace',
-              background: 'linear-gradient(45deg, #ff6b35, #ffa500, #ff8c42)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              marginBottom: '1rem',
-              textShadow: '0 0 30px rgba(255, 107, 53, 0.5)'
-            }}>
+            <h1 style={styles.title}>
               WORK EXPERIENCE
             </h1>
-            <p style={{
-              fontSize: isMobile ? '1.125rem' : '1.5rem',
-              color: '#ffa500',
-              fontWeight: '300',
-              maxWidth: '600px',
-              margin: '0 auto'
-            }}>
+            <p style={styles.subtitle}>
               Professional Journey Through Mars Volcanic Terrain
             </p>
           </motion.div>
 
-          {/* Experience Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(500px, 1fr))',
-            gap: '2rem',
-            marginBottom: '3rem'
-          }}>
+          <div style={styles.grid}>
             {workExperience.map((job, index) => (
-              <motion.div
+              <EnhancedExperienceCard
                 key={job.id}
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 5.2 + index * 0.2 }}
-                className="experience-card glass-effect"
-                style={{
-                  borderRadius: '1rem',
-                  padding: '2rem',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-                onClick={() => setSelectedJob(job)}
-              >
-                {/* Card Header */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  marginBottom: '1.5rem'
-                }}>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{
-                      fontSize: '1.5rem',
-                      fontWeight: '700',
-                      color: job.color,
-                      marginBottom: '0.5rem',
-                      fontFamily: 'Orbitron, monospace'
-                    }}>
-                      {job.title}
-                    </h3>
-                    <p style={{
-                      fontSize: '1.125rem',
-                      color: '#ffffff',
-                      fontWeight: '600',
-                      marginBottom: '0.25rem'
-                    }}>
-                      {job.company}
-                    </p>
-                    <p style={{
-                      fontSize: '0.875rem',
-                      color: '#cccccc',
-                      fontWeight: '400'
-                    }}>
-                      {job.period} • {job.location}
-                    </p>
-                  </div>
-                  <div style={{
-                    width: '4px',
-                    height: '60px',
-                    background: `linear-gradient(to bottom, ${job.color}, transparent)`,
-                    borderRadius: '2px'
-                  }} />
-                </div>
-
-                {/* Description */}
-                <p style={{
-                  fontSize: '1rem',
-                  color: '#e0e0e0',
-                  lineHeight: '1.6',
-                  marginBottom: '1.5rem'
-                }}>
-                  {job.description}
-                </p>
-
-                {/* Key Achievements Preview */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
-                  <span style={{
-                    fontSize: '0.875rem',
-                    color: job.color,
-                    fontWeight: '500'
-                  }}>
-                    VIEW ACHIEVEMENTS →
-                  </span>
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    style={{
-                      width: '2rem',
-                      height: '2rem',
-                      borderRadius: '50%',
-                      background: `linear-gradient(45deg, ${job.color}, transparent)`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1rem',
-                      color: 'white'
-                    }}
-                  >
-                    →
-                  </motion.div>
-                </div>
-
-                {/* Hover Effect Overlay */}
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: `linear-gradient(135deg, ${job.color}10, transparent)`,
-                  opacity: 0,
-                  transition: 'opacity 0.3s ease',
-                  borderRadius: '1rem',
-                  pointerEvents: 'none'
-                }} />
-              </motion.div>
+                job={job}
+                index={index}
+                isMobile={isMobile}
+                onSelect={setSelectedJob}
+              />
             ))}
           </div>
         </div>
 
-        {/* Job Details Modal */}
+        {/* ORIGINAL MODAL */}
         <AnimatePresence>
           {selectedJob && (
             <motion.div
@@ -999,138 +1091,228 @@ const MarsWorkExperienceLeftBottomVolcanoComponent = () => {
               style={{
                 position: 'fixed',
                 inset: 0,
-                background: 'rgba(0, 0, 0, 0.8)',
-                backdropFilter: 'blur(8px)',
+                background: 'rgba(0, 0, 0, 0.95)',
+                backdropFilter: 'blur(20px)',
                 zIndex: 100,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: isMobile ? '1rem' : '2rem'
+                padding: isMobile ? '1rem' : '1.5rem'
               }}
               onClick={() => setSelectedJob(null)}
-              className="shake-effect"
+              className="no-scrollbar"
             >
               <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                className="glass-effect"
+                initial={{ scale: 0.7, opacity: 0, y: 100 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.7, opacity: 0, y: 100 }}
+                transition={{ type: "spring", stiffness: 200, damping: 30 }}
                 style={{
+                  background: 'rgba(0, 0, 0, 0.85)',
+                  backdropFilter: 'blur(30px)',
+                  border: `4px solid ${selectedJob.color}80`,
                   borderRadius: '1.5rem',
-                  padding: isMobile ? '2rem' : '3rem',
+                  padding: isMobile ? '1.5rem' : '2rem',
                   width: '100%',
-                  maxWidth: '600px',
-                  maxHeight: '80vh',
-                  overflowY: 'auto',
-                  border: `2px solid ${selectedJob.color}40`
+                  maxWidth: '700px',
+                  maxHeight: '85vh',
+                  position: 'relative',
+                  boxShadow: `0 0 60px ${selectedJob.color}60, 0 0 120px ${selectedJob.color}30, inset 0 0 30px ${selectedJob.color}15`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflowY: 'auto'
                 }}
                 onClick={(e) => e.stopPropagation()}
+                className="no-scrollbar"
               >
+                <motion.div
+                  animate={{
+                    background: [
+                      `radial-gradient(circle at 25% 25%, ${selectedJob.color}20, transparent 55%)`,
+                      `radial-gradient(circle at 75% 75%, ${selectedJob.color}25, transparent 55%)`,
+                      `radial-gradient(circle at 25% 25%, ${selectedJob.color}20, transparent 55%)`
+                    ]
+                  }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '1.5rem',
+                    pointerEvents: 'none'
+                  }}
+                />
+
+                {/* HEADER */}
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
-                  marginBottom: '2rem'
+                  marginBottom: '1.5rem',
+                  position: 'relative',
+                  zIndex: 1,
+                  flexShrink: 0
                 }}>
-                  <div>
-                    <h2 style={{
-                      fontSize: isMobile ? '1.75rem' : '2.25rem',
-                      fontWeight: '700',
-                      color: selectedJob.color,
-                      marginBottom: '0.5rem',
-                      fontFamily: 'Orbitron, monospace'
-                    }}>
-                      {selectedJob.title}
-                    </h2>
-                    <p style={{
-                      fontSize: '1.25rem',
-                      color: '#ffffff',
-                      fontWeight: '600',
-                      marginBottom: '0.25rem'
-                    }}>
-                      {selectedJob.company}
-                    </p>
-                    <p style={{
-                      color: '#cccccc',
-                      fontSize: '1rem'
-                    }}>
-                      {selectedJob.period} • {selectedJob.location}
-                    </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
+                    <motion.img 
+                      src={selectedJob.icon} 
+                      alt={selectedJob.title}
+                      style={{
+                        width: '55px',
+                        height: '55px',
+                        borderRadius: '10px',
+                        objectFit: 'cover',
+                        border: `3px solid ${selectedJob.color}`,
+                        boxShadow: `0 0 25px ${selectedJob.color}70, 0 0 50px ${selectedJob.color}35`
+                      }}
+                      whileHover={{ scale: 1.1, rotate: 6 }}
+                    />
+                    <div>
+                      <h2 style={{
+                        fontSize: isMobile ? '1.3rem' : '1.6rem',
+                        fontWeight: '700',
+                        color: selectedJob.color,
+                        marginBottom: '0.3rem',
+                        fontFamily: 'Orbitron, monospace',
+                        textShadow: `0 0 15px ${selectedJob.color}60, 0 0 30px ${selectedJob.color}30`
+                      }}>
+                        {selectedJob.title}
+                      </h2>
+                      <p style={{
+                        fontSize: '0.9rem',
+                        color: '#ffffff',
+                        fontWeight: '600',
+                        marginBottom: '0.2rem'
+                      }}>
+                        {selectedJob.company}
+                      </p>
+                      <p style={{
+                        color: '#cccccc',
+                        fontSize: '0.8rem'
+                      }}>
+                        {selectedJob.period} • {selectedJob.location}
+                      </p>
+                    </div>
                   </div>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.2, rotate: 180, color: selectedJob.color }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={() => setSelectedJob(null)}
                     style={{
                       background: 'none',
                       border: 'none',
                       color: '#cccccc',
-                      fontSize: '1.5rem',
+                      fontSize: '1.3rem',
                       cursor: 'pointer',
-                      padding: '0.5rem'
+                      padding: '0.6rem',
+                      borderRadius: '50%',
+                      transition: 'all 0.3s ease',
+                      position: 'relative',
+                      zIndex: 2
                     }}
                   >
                     ✕
-                  </button>
+                  </motion.button>
                 </div>
 
+                {/* DESCRIPTION */}
                 <p style={{
-                  fontSize: '1.125rem',
+                  fontSize: '0.9rem',
                   color: '#e0e0e0',
-                  lineHeight: '1.7',
-                  marginBottom: '2rem'
+                  lineHeight: '1.6',
+                  marginBottom: '1.5rem',
+                  position: 'relative',
+                  zIndex: 1,
+                  flexShrink: 0
                 }}>
                   {selectedJob.description}
                 </p>
 
-                <div>
+                {/* ACHIEVEMENTS */}
+                <div style={{ 
+                  position: 'relative', 
+                  zIndex: 1,
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
                   <h3 style={{
-                    fontSize: '1.5rem',
+                    fontSize: '1.2rem',
                     fontWeight: '700',
                     color: selectedJob.color,
-                    marginBottom: '1.5rem',
-                    fontFamily: 'Orbitron, monospace'
+                    marginBottom: '1rem',
+                    fontFamily: 'Orbitron, monospace',
+                    textShadow: `0 0 12px ${selectedJob.color}60, 0 0 24px ${selectedJob.color}30`,
+                    flexShrink: 0
                   }}>
                     Key Achievements
                   </h3>
-                  <ul style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: 0
+                  
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.7rem',
+                    flex: 1,
+                    minHeight: 0
                   }}>
                     {selectedJob.achievements.map((achievement, index) => (
-                      <motion.li
+                      <motion.div
                         key={index}
-                        initial={{ opacity: 0, x: -20 }}
+                        initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
+                        transition={{ delay: index * 0.1, type: "spring" }}
                         style={{
                           display: 'flex',
                           alignItems: 'flex-start',
-                          marginBottom: '1rem',
-                          padding: '0.75rem',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          borderRadius: '0.5rem',
-                          border: `1px solid ${selectedJob.color}20`
+                          padding: '0.8rem',
+                          background: 'rgba(255, 255, 255, 0.12)',
+                          borderRadius: '0.7rem',
+                          border: `2px solid ${selectedJob.color}35`,
+                          transition: 'all 0.3s ease',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          flexShrink: 0
+                        }}
+                        whileHover={{
+                          background: 'rgba(255, 255, 255, 0.18)',
+                          borderColor: `${selectedJob.color}50`,
+                          scale: 1.01,
+                          boxShadow: `0 6px 20px ${selectedJob.color}35, 0 0 15px ${selectedJob.color}20`
                         }}
                       >
+                        <motion.div
+                          whileHover={{ opacity: 1 }}
+                          initial={{ opacity: 0 }}
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: `linear-gradient(45deg, transparent, ${selectedJob.color}12, transparent)`,
+                            pointerEvents: 'none'
+                          }}
+                        />
                         <div style={{
                           width: '6px',
                           height: '6px',
                           background: selectedJob.color,
                           borderRadius: '50%',
-                          marginTop: '0.5rem',
-                          marginRight: '1rem',
-                          flexShrink: 0
+                          marginTop: '0.4rem',
+                          marginRight: '0.9rem',
+                          flexShrink: 0,
+                          boxShadow: `0 0 12px ${selectedJob.color}, 0 0 24px ${selectedJob.color}50`,
+                          position: 'relative',
+                          zIndex: 1
                         }} />
                         <span style={{
                           color: '#e0e0e0',
-                          fontSize: '1rem',
-                          lineHeight: '1.6'
+                          fontSize: '0.8rem',
+                          lineHeight: '1.5',
+                          position: 'relative',
+                          zIndex: 1
                         }}>
                           {achievement}
                         </span>
-                      </motion.li>
+                      </motion.div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
@@ -1141,5 +1323,5 @@ const MarsWorkExperienceLeftBottomVolcanoComponent = () => {
   )
 }
 
-export default MarsWorkExperienceLeftBottomVolcanoComponent
+export default FinalMarsWorkExperienceComponent
 
