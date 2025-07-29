@@ -18,7 +18,7 @@ const projects = [
     ],
     color: '#ff9500',
     status: 'Deployed',
-    link: 'https://github.com/yourusername/instabuy',
+    link: 'https://github.com/Vineeth0502/Instabuy.git',
     image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop'
   },
   {
@@ -56,7 +56,7 @@ const projects = [
     ],
     color: '#ffa500',
     status: 'Completed',
-    link: 'https://github.com/yourusername/community-lost-found',
+    link: 'https://github.com/Vineeth0502/lost-found.git',
     image: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&h=400&fit=crop'
   },
   {
@@ -75,7 +75,7 @@ const projects = [
     ],
     color: '#cd853f',
     status: 'Active',
-    link: 'https://github.com/yourusername/realtime-coding-platform',
+    link: 'https://github.com/Vineeth0502/Realtime-Collaborative-Coding-Platform.git',
     image: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop'
   },
   {
@@ -94,7 +94,7 @@ const projects = [
     ],
     color: '#daa520',
     status: 'Prototype',
-    link: 'https://github.com/yourusername/leo-ai-assistant',
+    link: 'https://github.com/Vineeth0502/Leo.git',
     image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop'
   },
   {
@@ -113,7 +113,7 @@ const projects = [
     ],
     color: '#b8860b',
     status: 'Mobile',
-    link: 'https://github.com/yourusername/baatcheeth-chat-app',
+    link: 'https://github.com/Vineeth0502/BaatCheeth.git',
     image: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=600&h=400&fit=crop'
   }
 ]
@@ -554,11 +554,35 @@ const JupiterAtmosphericBackground = () => {
   )
 }
 
-// Scroll to Top Button Component
+// Enhanced Scroll to Top Button Component with Main Heading Visibility Detection
 const ScrollToTopButton = () => {
   const [isVisible, setIsVisible] = useState(false)
+  const [isMainHeadingVisible, setIsMainHeadingVisible] = useState(true)
+  const mainHeadingRef = useRef(null)
 
   useEffect(() => {
+    // Create intersection observer for main heading
+    const headingObserver = new IntersectionObserver(
+      ([entry]) => {
+        setIsMainHeadingVisible(entry.isIntersecting)
+      },
+      { 
+        threshold: 0.1, // Trigger when 10% of the heading is visible
+        rootMargin: '0px 0px -50px 0px' // Add some margin to trigger earlier
+      }
+    )
+
+    // Find the main heading element (assuming it has a specific class or ID)
+    const mainHeading = document.querySelector('[data-main-heading]') || 
+                       document.querySelector('h1') || 
+                       document.querySelector('.main-heading')
+    
+    if (mainHeading) {
+      mainHeadingRef.current = mainHeading
+      headingObserver.observe(mainHeading)
+    }
+
+    // Scroll position observer
     const toggleVisibility = () => {
       if (window.pageYOffset > 300) {
         setIsVisible(true)
@@ -568,7 +592,14 @@ const ScrollToTopButton = () => {
     }
 
     window.addEventListener('scroll', toggleVisibility)
-    return () => window.removeEventListener('scroll', toggleVisibility)
+    
+    return () => {
+      window.removeEventListener('scroll', toggleVisibility)
+      if (mainHeadingRef.current) {
+        headingObserver.unobserve(mainHeadingRef.current)
+      }
+      headingObserver.disconnect()
+    }
   }, [])
 
   const scrollToTop = () => {
@@ -578,9 +609,12 @@ const ScrollToTopButton = () => {
     })
   }
 
+  // Show button only when scrolled down AND main heading is not visible
+  const shouldShowButton = isVisible && !isMainHeadingVisible
+
   return (
     <AnimatePresence>
-      {isVisible && (
+      {shouldShowButton && (
         <motion.button
           initial={{ opacity: 0, scale: 0, rotate: -180 }}
           animate={{ opacity: 1, scale: 1, rotate: 0 }}
@@ -683,8 +717,8 @@ const ScrollToTopButton = () => {
   )
 }
 
-// Enhanced Project Card Component with Stacking Effect
-const StackingProjectCard = ({ project, index, isMobile }) => {
+// Sequential Project Card Component (No Stacking)
+const SequentialProjectCard = ({ project, index, isMobile }) => {
   const cardRef = useRef(null)
   const [isInView, setIsInView] = useState(false)
 
@@ -707,8 +741,7 @@ const StackingProjectCard = ({ project, index, isMobile }) => {
   return (
     <motion.div
       ref={cardRef}
-      className="sticky top-20 mb-8"
-      style={{ zIndex: 10 + index }}
+      className="mb-16" // Changed from sticky to regular margin for sequential layout
       initial={{ opacity: 0, y: 100, scale: 0.9 }}
       animate={isInView ? { 
         opacity: 1, 
@@ -736,17 +769,17 @@ const StackingProjectCard = ({ project, index, isMobile }) => {
         <motion.div
           className="relative p-8 rounded-3xl backdrop-blur-xl border-2 overflow-hidden"
           style={{
-            background: 'rgba(0, 0, 0, 0.3)', // Made more transparent
+            background: 'rgba(139, 69, 19, 0.3)',
             borderColor: project.color,
             boxShadow: `0 20px 60px ${project.color}40, inset 0 0 60px rgba(255, 255, 255, 0.08)`,
             minHeight: isMobile ? '600px' : '700px'
           }}
         >
-          {/* Left-to-Right Transition Effect - Increased Opacity */}
+          {/* Left-to-Right Transition Effect */}
           <motion.div
             className="absolute inset-0 rounded-3xl pointer-events-none"
             style={{
-              background: `linear-gradient(90deg, transparent 0%, ${project.color}50 50%, transparent 100%)`, // Increased from 20 to 50
+              background: `linear-gradient(90deg, transparent 0%, ${project.color}40 50%, transparent 100%)`,
               width: '200%',
               left: '-100%'
             }}
@@ -917,7 +950,7 @@ const StackingProjectCard = ({ project, index, isMobile }) => {
                 </motion.a>
               </div>
 
-              {/* Project Image - Decreased Size */}
+              {/* Project Image */}
               <motion.div
                 className={`${isMobile ? 'order-first' : ''} relative`}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -927,7 +960,7 @@ const StackingProjectCard = ({ project, index, isMobile }) => {
                 <div 
                   className="relative rounded-2xl overflow-hidden"
                   style={{
-                    height: isMobile ? '200px' : '280px', // Decreased from 250px/350px
+                    height: isMobile ? '250px' : '350px',
                     border: `2px solid ${project.color}40`,
                     boxShadow: `0 0 30px ${project.color}30`
                   }}
@@ -1058,7 +1091,7 @@ const StackingProjectCard = ({ project, index, isMobile }) => {
   )
 }
 
-// Enhanced Main Heading Component
+// Enhanced Main Heading Component with data attribute for targeting
 const EnhancedMainHeading = ({ isMobile }) => {
   return (
     <motion.div
@@ -1066,6 +1099,7 @@ const EnhancedMainHeading = ({ isMobile }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 1.2, delay: 3.8 }}
       className="text-center mb-16 relative"
+      data-main-heading // Add this attribute for targeting by the scroll button
     >
       {/* Background glow effect */}
       <motion.div
@@ -1205,7 +1239,7 @@ const EnhancedMainHeading = ({ isMobile }) => {
   )
 }
 
-// Main Projects Component with Fixed Background and Stacking
+// Main Projects Component with Fixed Background and Sequential Cards
 const JupiterProjects = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
@@ -1295,7 +1329,7 @@ const JupiterProjects = () => {
           </div>
         </motion.div>
 
-        {/* Scroll to Top Button */}
+        {/* Enhanced Scroll to Top Button */}
         <ScrollToTopButton />
 
         {/* Fixed Jupiter Atmospheric Background */}
@@ -1336,10 +1370,10 @@ const JupiterProjects = () => {
             </motion.div>
           </div>
 
-          {/* Stacking Projects Section */}
+          {/* Sequential Projects Section */}
           <div className="relative">
             {projects.map((project, index) => (
-              <StackingProjectCard
+              <SequentialProjectCard
                 key={project.id}
                 project={project}
                 index={index}
@@ -1376,8 +1410,8 @@ const JupiterProjects = () => {
                 transition={{ duration: 2.5, repeat: Infinity }}
               />
               <span className="text-orange-300 font-mono text-sm tracking-wider">
-                      BUILT WITH THE ENERGY OF JUPITER              
-            </span>
+                POWERED BY JUPITER'S LIGHTNING STORMS
+              </span>
             </motion.div>
           </motion.div>
         </div>
